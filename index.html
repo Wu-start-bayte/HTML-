@@ -352,6 +352,46 @@
             backdrop-filter: blur(10px) saturate(1.1);
             -webkit-backdrop-filter: blur(10px) saturate(1.1);
         }
+        
+        .storage-pill {
+            background: var(--chipBg);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+            border: 1px solid var(--glassBorder);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .storage-pill:hover {
+            background: color-mix(in oklab, var(--chipBg) 80%, rgba(255, 170, 92, 0.15));
+            border-color: var(--accent0);
+        }
+        
+        .storage-pill.warning {
+            background: color-mix(in oklab, var(--chipBg) 70%, rgba(255, 100, 100, 0.15));
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+        
+        .storage-pill.critical {
+            background: color-mix(in oklab, var(--chipBg) 60%, rgba(255, 50, 50, 0.25));
+            color: #ff4444;
+            border-color: #ff4444;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
 
         /* 管理组别 Modal */
         .panel {
@@ -904,6 +944,7 @@
         <div style="display:flex; flex-direction:column; gap:10px; flex: 1; min-width: 260px;">
             <div class="groups-bar" id="groupsBar"></div>
             <div class="hint-pill" id="cardCountDisplay">🍽️ 当前 0 道美味</div>
+            <div class="storage-pill" id="storageDisplay" title="点击查看存储详情">💾 存储: 计算中...</div>
             <div class="multigroup-box" id="multiGroupBox">
                 <div class="panel-row" style="justify-content: space-between;">
                     <div style="font-weight:800; color: var(--text);">多选组抽取</div>
@@ -1027,9 +1068,84 @@
         };
     }
 
+    // 计算存储使用情况
+    function getStorageUsage() {
+        try {
+            const state = buildState();
+            const jsonStr = JSON.stringify(state);
+            const usedBytes = new Blob([jsonStr]).size;
+            const usedKB = Math.round(usedBytes / 1024);
+            const usedMB = usedKB / 1024;
+            
+            // 尝试估算 localStorage 剩余空间（近似值）
+            let remainingEstimate = null;
+            try {
+                const testKey = '__storage_test__';
+                const testData = 'x'.repeat(1024); // 1KB 测试数据
+                localStorage.setItem(testKey, testData);
+                localStorage.removeItem(testKey);
+                // 如果能成功写入 1KB，说明至少还有 1KB 空间
+                remainingEstimate = '>1KB';
+            } catch(e) {
+                remainingEstimate = '已满或几乎满';
+            }
+            
+            return {
+                usedBytes,
+                usedKB,
+                usedMB: usedMB.toFixed(2),
+                jsonLength: jsonStr.length,
+                remainingEstimate,
+                cardsCount: cards.length,
+                cardsWithImages: cards.filter(c => c.imageData && c.imageData.length > 100).length
+            };
+        } catch(e) {
+            console.error('计算存储使用情况失败:', e);
+            return null;
+        }
+    }
+    
+    // 显示存储使用情况警告（如果需要）
+    function checkAndWarnStorage() {
+        const usage = getStorageUsage();
+        if (!usage) return;
+        
+        // 如果使用超过 3MB 或卡片数量很多，显示警告
+        if (usage.usedMB > 3 || usage.cardsCount > 20) {
+            const isMobile = isMobileDevice();
+            const warningMsg = `📊 存储使用情况：已使用 ${usage.usedMB}MB\n` +
+                              `📸 有图片的卡片：${usage.cardsWithImages}/${usage.cardsCount}\n` +
+                              `${isMobile ? '📱 检测到移动设备，存储空间有限\n' : ''}` +
+                              `💡 建议：删除不需要的卡片或使用文字替代图片`;
+            
+            // 只在新添加卡片时显示警告，避免频繁打扰
+            if (Math.random() < 0.3) { // 30% 概率显示，避免太烦人
+                console.log(warningMsg);
+            }
+        }
+    }
+    
+    // 清理大图片数据（按需调用）
+    function cleanupLargeImages(thresholdKB = 500) {
+        let cleanedCount = 0;
+        const originalCount = cards.length;
+        
+        cards.forEach(card => {
+            if (card.imageData && card.imageData.length > thresholdKB * 1024) {
+                console.log(`发现大图片卡片 "${card.name}"，大小: ${Math.round(card.imageData.length / 1024)}KB`);
+                // 这里可以提示用户是否要删除或重新压缩，但为了安全我们先不自动删除
+            }
+        });
+        
+        return { originalCount, cleanedCount };
+    }
+
     function saveToLocal() {
         try {
             localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(buildState()));
+            // 保存成功后更新存储显示和检查存储使用情况
+            updateStorageDisplay();
+            checkAndWarnStorage();
             return true;
         } catch (e) {
             const msg = (e && e.name) ? e.name : '';
@@ -1039,6 +1155,8 @@
             } else {
                 alert('保存失败：' + (e && e.message ? e.message : '未知错误'));
             }
+            // 即使保存失败也尝试更新存储显示
+            setTimeout(updateStorageDisplay, 100);
             return false;
         }
     }
@@ -1164,6 +1282,9 @@
             btn.removeEventListener('click', handleViewImageClick);
             btn.addEventListener('click', handleViewImageClick);
         });
+        
+        // 更新存储显示
+        updateStorageDisplay();
     }
 
     function escapeHtml(str) {
@@ -1223,6 +1344,81 @@
         } else {
             alert('这张外卖没有图片哦～');
         }
+    }
+    
+    // 更新存储使用情况显示
+    function updateStorageDisplay() {
+        const storageDisplay = document.getElementById('storageDisplay');
+        if (!storageDisplay) return;
+        
+        const usage = getStorageUsage();
+        if (!usage) {
+            storageDisplay.textContent = '💾 存储: 计算错误';
+            return;
+        }
+        
+        const isMobile = isMobileDevice();
+        let displayText = '';
+        let cssClass = '';
+        
+        // 根据使用情况设置显示文本和样式
+        if (usage.usedMB > 4.5) {
+            displayText = `💾 存储: ${usage.usedMB}MB ⚠️ 快满了!`;
+            cssClass = 'critical';
+        } else if (usage.usedMB > 3) {
+            displayText = `💾 存储: ${usage.usedMB}MB ⚠️`;
+            cssClass = 'warning';
+        } else if (usage.usedMB > 1.5) {
+            displayText = `💾 存储: ${usage.usedMB}MB`;
+            cssClass = '';
+        } else {
+            displayText = `💾 存储: ${usage.usedMB}MB`;
+            cssClass = '';
+        }
+        
+        if (isMobile) {
+            displayText = `📱 ${displayText}`;
+        }
+        
+        storageDisplay.textContent = displayText;
+        storageDisplay.className = 'storage-pill ' + cssClass;
+        
+        // 更新tooltip
+        const tooltip = `已使用: ${usage.usedMB}MB\n` +
+                       `卡片总数: ${usage.cardsCount}\n` +
+                       `有图片的卡片: ${usage.cardsWithImages}\n` +
+                       `估算剩余: ${usage.remainingEstimate}\n` +
+                       `${isMobile ? '📱 移动设备模式' : '💻 桌面模式'}\n` +
+                       `点击查看详情`;
+        storageDisplay.title = tooltip;
+    }
+    
+    // 显示存储详情
+    function showStorageDetails() {
+        const usage = getStorageUsage();
+        if (!usage) {
+            alert('无法获取存储使用情况');
+            return;
+        }
+        
+        const isMobile = isMobileDevice();
+        const detailMsg = `📊 存储使用详情\n\n` +
+                         `已使用空间: ${usage.usedMB}MB (${usage.usedKB}KB)\n` +
+                         `卡片总数: ${usage.cardsCount} 张\n` +
+                         `有图片的卡片: ${usage.cardsWithImages} 张\n` +
+                         `无图片的卡片: ${usage.cardsCount - usage.cardsWithImages} 张\n` +
+                         `估算剩余空间: ${usage.remainingEstimate}\n` +
+                         `设备类型: ${isMobile ? '📱 移动设备' : '💻 桌面设备'}\n\n` +
+                         `💡 建议:\n` +
+                         `- 删除不需要的卡片\n` +
+                         `- 使用纯文字添加外卖（不传图片）\n` +
+                         `- 移动设备存储有限，请控制图片数量\n` +
+                         `- 每张图片压缩至 ${isMobile ? '800px' : '1024px'} 以内\n\n` +
+                         `当前压缩设置:\n` +
+                         `- 最大边长: ${isMobile ? '800px' : '1024px'}\n` +
+                         `- 图片质量: ${isMobile ? '65%' : '78%'}`;
+        
+        alert(detailMsg);
     }
 
     // 显示图片模态框
@@ -1366,9 +1562,20 @@
         return canvas.toDataURL('image/jpeg', quality);
     }
 
+    // 检测是否为移动设备
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
     async function compressImageFile(file, opts = {}) {
-        const maxEdge = opts.maxEdge || 1024;
-        const quality = (typeof opts.quality === 'number') ? opts.quality : 0.78;
+        const isMobile = isMobileDevice();
+        // 移动设备使用更严格的压缩
+        // 大幅压缩图片以节省存储空间
+        const defaultMaxEdge = isMobile ? 350 : 450;
+        const defaultQuality = isMobile ? 0.40 : 0.50;
+        
+        const maxEdge = opts.maxEdge || defaultMaxEdge;
+        const quality = (typeof opts.quality === 'number') ? opts.quality : defaultQuality;
         const preferredType = 'image/webp';
 
         const rawDataUrl = await fileToBase64(file);
@@ -1395,7 +1602,26 @@
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, targetW, targetH);
 
-        const compressed = canvasToDataUrl(canvas, preferredType, quality);
+        let compressed = canvasToDataUrl(canvas, preferredType, quality);
+        
+        // 如果压缩后还是太大（> 150KB），进一步压缩
+        if (compressed && compressed.length > 150 * 1024) {
+            console.log('图片压缩后仍然较大，尝试进一步压缩');
+            // 进一步缩小尺寸和质量
+            const smallerEdge = Math.max(400, Math.round(maxEdge * 0.7));
+            let smallerW = w, smallerH = h;
+            if (longer > smallerEdge) {
+                const scale = smallerEdge / longer;
+                smallerW = Math.round(w * scale);
+                smallerH = Math.round(h * scale);
+            }
+            canvas.width = smallerW;
+            canvas.height = smallerH;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, smallerW, smallerH);
+            compressed = canvasToDataUrl(canvas, preferredType, Math.max(0.4, quality * 0.8));
+        }
+        
         // 若压缩后反而更大，使用原始
         if (compressed && compressed.length < rawDataUrl.length) return compressed;
         return rawDataUrl;
@@ -1413,7 +1639,8 @@
         }
         try {
             // 关键：压缩/缩放，避免 localStorage 迅速触顶导致“只能传 3 张”
-            const base64 = await compressImageFile(file, { maxEdge: 1024, quality: 0.78 });
+            // 使用默认压缩参数，移动设备会自动使用更严格的压缩
+            const base64 = await compressImageFile(file);
             pendingImageBase64 = base64;
             pendingFileName = file.name;
             // 显示预览
