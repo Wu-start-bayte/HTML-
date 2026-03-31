@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>🍜 今天吃什么 · 外卖随机决定器</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+
+            --bg0: #f7f0e6;
+            --bg1: #e9dfd1;
+
+            --text: #2d2418;
+            --muted: rgba(45, 36, 24, 0.68);
+
+            --accent0: #e67e22;
+            --accent1: #d35400;
+            --ring: rgba(230, 126, 34, 0.22);
+
+            --glass: rgba(255, 255, 255, 0.58);
+            --glass2: rgba(255, 255, 255, 0.42);
+            --glassBorder: rgba(255, 214, 180, 0.55);
+            --glassBorderStrong: rgba(255, 204, 136, 0.9);
+
+            --shadow: 0 18px 42px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.04);
+            --shadowStrong: 0 40px 60px rgba(0,0,0,0.22);
+
+            --blur: 14px;
+
+            --inputBg: rgba(255, 255, 255, 0.55);
+            --chipBg: rgba(255, 240, 228, 0.72);
+            --chipBg2: rgba(255, 250, 245, 0.72);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg0: #17120c;
+                --bg1: #241a12;
+
+                --text: rgba(245, 232, 218, 0.92);
+                --muted: rgba(245, 232, 218, 0.68);
+
+                --ring: rgba(255, 168, 92, 0.28);
+
+                --glass: rgba(28, 20, 14, 0.56);
+                --glass2: rgba(28, 20, 14, 0.40);
+                --glassBorder: rgba(255, 196, 132, 0.20);
+                --glassBorderStrong: rgba(255, 196, 132, 0.32);
+
+                --shadow: 0 18px 50px rgba(0,0,0,0.55), 0 2px 10px rgba(0,0,0,0.30);
+                --shadowStrong: 0 50px 70px rgba(0,0,0,0.65);
+
+                --inputBg: rgba(255, 255, 255, 0.06);
+                --chipBg: rgba(255, 184, 120, 0.12);
+                --chipBg2: rgba(255, 255, 255, 0.06);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, var(--bg0) 0%, var(--bg1) 100%);
+            font-family: 'Segoe UI', 'SF Pro Text', 'PingFang SC', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            padding: 24px 20px 48px;
+            min-height: 100vh;
+            color: var(--text);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -20vmax;
+            pointer-events: none;
+            z-index: -1;
+            filter: blur(40px) saturate(1.25);
+            opacity: 0.8;
+            transform: translateZ(0);
+        }
+
+        body::before {
+            background:
+                radial-gradient(closest-side at 22% 18%, rgba(255, 170, 92, 0.40), transparent 58%),
+                radial-gradient(closest-side at 78% 30%, rgba(255, 220, 180, 0.42), transparent 62%),
+                radial-gradient(closest-side at 50% 78%, rgba(232, 126, 34, 0.28), transparent 60%);
+        }
+
+        body::after {
+            background:
+                radial-gradient(closest-side at 18% 70%, rgba(255, 255, 255, 0.28), transparent 58%),
+                radial-gradient(closest-side at 86% 76%, rgba(255, 240, 228, 0.34), transparent 62%);
+            opacity: 0.55;
+            filter: blur(60px) saturate(1.15);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body::before {
+                background:
+                    radial-gradient(closest-side at 22% 18%, rgba(255, 152, 80, 0.22), transparent 62%),
+                    radial-gradient(closest-side at 78% 30%, rgba(255, 210, 160, 0.12), transparent 66%),
+                    radial-gradient(closest-side at 55% 82%, rgba(230, 126, 34, 0.16), transparent 64%);
+                opacity: 0.85;
+                filter: blur(54px) saturate(1.25);
+            }
+
+            body::after {
+                background:
+                    radial-gradient(closest-side at 18% 70%, rgba(255, 255, 255, 0.08), transparent 62%),
+                    radial-gradient(closest-side at 86% 76%, rgba(255, 190, 130, 0.12), transparent 66%);
+                opacity: 0.6;
+                filter: blur(70px) saturate(1.2);
+            }
+        }
+
+        .glass-surface {
+            background: var(--glass);
+            border: 1px solid var(--glassBorder);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(var(--blur)) saturate(1.15);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(1.15);
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* 头部区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 2.6rem;
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .header h1 span {
+            background: none;
+            color: #c94f0b;
+            font-size: 2.8rem;
+        }
+
+        .sub {
+            color: var(--muted);
+            background: var(--glass2);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-weight: 500;
+            border: 1px solid var(--glassBorder);
+        }
+
+        /* 上传卡片区 */
+        .upload-area {
+            background: var(--glass);
+            border-radius: 48px;
+            padding: 24px 28px;
+            margin-bottom: 36px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            border: 1px solid var(--glassBorder);
+            backdrop-filter: blur(var(--blur)) saturate(1.15);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(1.15);
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 2;
+            min-width: 160px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(184, 115, 51, 0.92);
+            margin-bottom: 6px;
+        }
+
+        .input-group input, .file-label {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 32px;
+            border: 1px solid var(--glassBorder);
+            background: var(--inputBg);
+            font-size: 1rem;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent0);
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        .file-label {
+            display: inline-block;
+            background: color-mix(in oklab, var(--inputBg) 80%, rgba(255, 170, 92, 0.18));
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            color: color-mix(in oklab, var(--text) 55%, var(--accent0));
+            border: 1px dashed color-mix(in oklab, var(--glassBorder) 60%, var(--accent0));
+        }
+
+        .file-label:hover {
+            background: color-mix(in oklab, var(--inputBg) 70%, rgba(255, 170, 92, 0.28));
+            border-color: var(--accent0);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 24px;
+            background: color-mix(in oklab, var(--glass2) 80%, rgba(255, 210, 160, 0.20));
+            border: 1px solid var(--glassBorder);
+        }
+
+        .preview-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .btn-add {
+            background: linear-gradient(110deg, #e67e22, #f39c12);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-family: inherit;
+        }
+
+        .btn-add:hover {
+            transform: scale(0.98);
+            background: linear-gradient(110deg, #d35400, #e67e22);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* 分组 Tabs */
+        .groups-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .group-tab {
+            border: 1px solid var(--glassBorder);
+            background: var(--glass2);
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.15s;
+            user-select: none;
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .group-tab:hover {
+            border-color: color-mix(in oklab, var(--glassBorder) 55%, var(--accent0));
+            background: color-mix(in oklab, var(--glass2) 70%, rgba(255, 170, 92, 0.20));
+        }
+
+        .group-tab.active {
+            border-color: color-mix(in oklab, var(--glassBorderStrong) 50%, var(--accent0));
+            background: linear-gradient(110deg,
+                color-mix(in oklab, var(--glass) 70%, rgba(255, 170, 92, 0.25)),
+                color-mix(in oklab, var(--glass2) 70%, rgba(255, 210, 160, 0.18))
+            );
+            color: var(--text);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-ghost {
+            background: var(--glass2);
+            border: 1px solid var(--glassBorder);
+            padding: 8px 14px;
+            border-radius: 999px;
+            color: color-mix(in oklab, var(--text) 60%, var(--accent0));
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.15s;
+            white-space: nowrap;
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .btn-ghost:hover {
+            background: color-mix(in oklab, var(--glass2) 65%, rgba(255, 170, 92, 0.20));
+            border-color: var(--accent0);
+        }
+
+        .hint-pill {
+            background: var(--chipBg);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+            border: 1px solid var(--glassBorder);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        /* 管理组别 Modal */
+        .panel {
+            background: var(--glass);
+            border-radius: 40px;
+            max-width: 520px;
+            width: 92%;
+            padding: 22px 18px 18px;
+            box-shadow: var(--shadowStrong);
+            border: 1px solid var(--glassBorderStrong);
+            backdrop-filter: blur(calc(var(--blur) + 6px)) saturate(1.15);
+            -webkit-backdrop-filter: blur(calc(var(--blur) + 6px)) saturate(1.15);
+        }
+
+        .panel h3 {
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .panel-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .panel-row input, .panel-row select {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--glassBorder);
+            background: var(--inputBg);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            min-width: 180px;
+            flex: 1;
+        }
+
+        .panel-list {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+            max-height: 45vh;
+            overflow: auto;
+            padding-right: 6px;
+        }
+
+        .group-item {
+            background: var(--glass2);
+            border: 1px solid var(--glassBorder);
+            border-radius: 24px;
+            padding: 12px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .group-item-name {
+            font-weight: 800;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .group-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .chip {
+            border: 1px solid var(--glassBorder);
+            background: var(--chipBg2);
+            border-radius: 999px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--muted);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .chip.danger {
+            color: #b42318;
+            border-color: #ffd6d2;
+            background: #fff2f0;
+        }
+
+        .chip:hover {
+            border-color: var(--accent0);
+            background: color-mix(in oklab, var(--chipBg2) 65%, rgba(255, 170, 92, 0.20));
+        }
+
+        .chip.danger:hover {
+            border-color: #ff9a9a;
+            background: #ffe9e7;
+        }
+
+        /* 多选组抽取面板 */
+        .multigroup-box {
+            margin-top: 12px;
+            padding: 12px 12px;
+            border: 1px solid var(--glassBorder);
+            border-radius: 24px;
+            background: var(--glass2);
+            display: none;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px) saturate(1.12);
+            -webkit-backdrop-filter: blur(12px) saturate(1.12);
+        }
+
+        .multigroup-box.show {
+            display: block;
+        }
+
+        .check-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .check-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid var(--glassBorder);
+            border-radius: 999px;
+            padding: 8px 12px;
+            background: var(--glass2);
+            cursor: pointer;
+            user-select: none;
+            font-weight: 700;
+            color: var(--muted);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .check-pill input {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            gap: 12px;
+        }
+
+        .card-count {
+            background: var(--chipBg);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-clear {
+            background: none;
+            border: 1px solid color-mix(in oklab, var(--glassBorder) 65%, rgba(219, 182, 140, 0.8));
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: color-mix(in oklab, var(--text) 58%, rgba(165, 93, 42, 0.9));
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            background: var(--glass2);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .btn-clear:hover {
+            background: color-mix(in oklab, var(--glass2) 55%, rgba(255, 170, 92, 0.22));
+            border-color: var(--accent0);
+        }
+
+        /* 随机主按钮 */
+        .eat-btn-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0 32px;
+        }
+
+        .eat-btn {
+            background: radial-gradient(circle at 30% 10%, #ff9f4a, #e25822);
+            border: none;
+            padding: 18px 48px;
+            border-radius: 80px;
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            box-shadow: 0 20px 30px -10px rgba(220, 80, 20, 0.4);
+            transition: all 0.2s ease;
+            letter-spacing: 2px;
+        }
+
+        .eat-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 卡片网格 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 28px;
+            margin-top: 12px;
+        }
+
+        /* 外卖卡片 💳 风格 */
+        .card {
+            background: var(--glass);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            backdrop-filter: blur(var(--blur)) saturate(1.15);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(1.15);
+            border: 1px solid var(--glassBorder);
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 25px 35px -12px rgba(0,0,0,0.2);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f5e6d6;
+            display: block;
+            transition: 0.2s;
+        }
+
+        .card-image-area {
+            width: 100%;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5e6d6;
+        }
+
+        .view-image-btn {
+            background: linear-gradient(110deg, #e67e22, #f39c12);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .view-image-btn:hover {
+            transform: scale(0.95);
+            background: linear-gradient(110deg, #d35400, #e67e22);
+        }
+
+        .no-image {
+            color: #c27e4a;
+            font-weight: bold;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .card-info {
+            padding: 18px 16px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass2);
+            backdrop-filter: blur(10px) saturate(1.1);
+            -webkit-backdrop-filter: blur(10px) saturate(1.1);
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text);
+            word-break: break-word;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .card-actions button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.1s;
+            width: 32px;
+            height: 32px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .edit-card {
+            color: #f5a65a;
+        }
+
+        .edit-card:hover {
+            background: color-mix(in oklab, var(--glass2) 60%, rgba(255, 170, 92, 0.20));
+            transform: scale(1.05);
+        }
+
+        .delete-card {
+            color: #c27e4a;
+        }
+
+        .delete-card:hover {
+            background: color-mix(in oklab, var(--glass2) 60%, rgba(255, 120, 120, 0.14));
+            color: #e63946;
+        }
+
+        /* 高亮抽中卡片动画 */
+        .card.highlight {
+            animation: popGlow 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) 2;
+            box-shadow: 0 0 0 4px #f39c12, 0 0 0 8px rgba(243,156,18,0.4);
+            transform: scale(1.02);
+        }
+
+        @keyframes popGlow {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 #f1c40f; }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 8px #f39c12, 0 0 0 14px rgba(243,156,18,0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 #f39c12; }
+        }
+
+        /* 模态框（抽中放大卡片效果）*/
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            font-family: inherit;
+        }
+
+        .modal-card {
+            background: var(--glass);
+            border-radius: 64px;
+            max-width: 340px;
+            width: 85%;
+            text-align: center;
+            padding: 28px 20px 32px;
+            box-shadow: var(--shadowStrong);
+            animation: floatModal 0.3s ease-out;
+            border: 1px solid var(--glassBorderStrong);
+            backdrop-filter: blur(calc(var(--blur) + 8px)) saturate(1.15);
+            -webkit-backdrop-filter: blur(calc(var(--blur) + 8px)) saturate(1.15);
+        }
+
+        @keyframes floatModal {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-card img {
+            width: 180px;
+            height: 180px;
+            border-radius: 40px;
+            object-fit: cover;
+            margin: 8px auto;
+            border: 4px solid color-mix(in oklab, var(--glassBorderStrong) 60%, rgba(255, 170, 102, 0.85));
+            background: color-mix(in oklab, var(--glass2) 80%, rgba(255, 210, 160, 0.20));
+        }
+
+        .modal-card h2 {
+            font-size: 2rem;
+            margin: 16px 0 8px;
+            color: color-mix(in oklab, var(--text) 60%, var(--accent1));
+        }
+
+        .modal-card p {
+            font-size: 1.2rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: linear-gradient(110deg, var(--accent0), #f39c12);
+            border: none;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .close-modal:focus-visible,
+        .btn-add:focus-visible,
+        .btn-ghost:focus-visible,
+        .btn-clear:focus-visible,
+        .group-tab:focus-visible,
+        .chip:focus-visible,
+        .check-pill:focus-visible,
+        .card-actions button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--ring);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .input-group label { color: rgba(255, 196, 132, 0.86); }
+            .edit-card { color: rgba(255, 196, 132, 0.85); }
+            .delete-card { color: rgba(255, 180, 150, 0.72); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--glass2);
+            border-radius: 60px;
+            color: var(--muted);
+            font-size: 1.2rem;
+            border: 1px solid var(--glassBorder);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px) saturate(1.12);
+            -webkit-backdrop-filter: blur(12px) saturate(1.12);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: color-mix(in oklab, var(--muted) 85%, rgba(173, 134, 98, 0.9));
+        }
+
+        @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+            :root {
+                --glass: rgba(255, 255, 255, 0.84);
+                --glass2: rgba(255, 255, 255, 0.74);
+                --inputBg: rgba(255, 255, 255, 0.86);
+                --shadow: 0 18px 42px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+                --shadowStrong: 0 44px 64px rgba(0,0,0,0.26);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --glass: rgba(28, 20, 14, 0.88);
+                    --glass2: rgba(28, 20, 14, 0.78);
+                    --inputBg: rgba(28, 20, 14, 0.86);
+                }
+            }
+
+            .glass-surface,
+            .upload-area,
+            .panel,
+            .modal,
+            .modal-card,
+            .card,
+            .card-info,
+            .sub,
+            .group-tab,
+            .btn-ghost,
+            .btn-clear,
+            .hint-pill,
+            .group-item,
+            .chip,
+            .multigroup-box,
+            .check-pill,
+            .empty-state {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+            .eat-btn { font-size: 1.5rem; padding: 14px 28px; gap: 8px; }
+            .card-name { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>
+            <span>🍱</span> 今天吃什么？ <span>🎲</span>
+        </h1>
+        <div class="sub">✨ 上传你的外卖军团，让命运点击「开吃」 ✨</div>
+    </div>
+
+    <!-- 上传区块 -->
+    <div class="upload-area">
+        <div class="form-row">
+            <div class="input-group">
+                <label>🍛 菜品 / 店名</label>
+                <input type="text" id="foodName" placeholder="例：招牌牛肉饭 / 麦辣鸡翅..." autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>📸 上传外卖图片（可选）</label>
+                <input type="file" id="imageUpload" accept="image/jpeg,image/png,image/webp">
+                <label for="imageUpload" class="file-label" id="fileLabelBtn">➕ 选择图片</label>
+                <div id="previewThumb" class="preview-row" style="display: none;">
+                    <img id="thumbImg" class="preview-img" alt="preview">
+                    <span id="fileNameShow"></span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>🗂️ 加入到组</label>
+                <select id="groupSelect" class="file-label" style="text-align:left; background: var(--inputBg);"></select>
+                <div class="preview-row" style="margin-top: 10px;">
+                    <button class="btn-ghost" id="manageGroupsBtn" type="button">🧩 管理组别</button>
+                </div>
+            </div>
+            <div class="input-group">
+                <button class="btn-add" id="addCardBtn">➕ 加入菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具栏 & 开吃按钮 -->
+    <div class="toolbar">
+        <div style="display:flex; flex-direction:column; gap:10px; flex: 1; min-width: 260px;">
+            <div class="groups-bar" id="groupsBar"></div>
+            <div class="hint-pill" id="cardCountDisplay">🍽️ 当前 0 道美味</div>
+            <div class="multigroup-box" id="multiGroupBox">
+                <div class="panel-row" style="justify-content: space-between;">
+                    <div style="font-weight:800; color: var(--text);">多选组抽取</div>
+                    <button class="btn-ghost" id="closeMultiGroupBtn" type="button">收起</button>
+                </div>
+                <div class="check-row" id="multiGroupChecks"></div>
+            </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+            <button class="btn-ghost" id="openMultiGroupBtn" type="button">🎯 多选组抽取</button>
+            <button class="btn-clear" id="clearAllBtn">🗑️ 清空全部</button>
+        </div>
+    </div>
+
+    <div class="eat-btn-wrapper">
+        <button class="eat-btn" id="eatRandomBtn">🍜 开 吃 ！ 🎲</button>
+    </div>
+
+    <!-- 卡片网格 -->
+    <div id="cardsContainer" class="cards-grid">
+        <!-- 动态卡片会渲染在此 -->
+        <div class="empty-state">🍕 还没有外卖选项～ 快上传图片并取个名字吧！</div>
+    </div>
+    <footer>💡 点击卡片上的✏️可改名，🗑️删除。所有图片自动保存在本地，刷新不丢失。</footer>
+</div>
+
+<!-- 抽取结果模态框 -->
+<div id="resultModal" class="modal">
+    <div class="modal-card">
+        <img id="modalImg" src="" alt="今日美食">
+        <h2 id="modalTitle">✨ 就是它 ✨</h2>
+        <p id="modalDesc">开动吧！</p>
+        <button class="close-modal" id="closeModalBtn">🥢 好！开动 🥢</button>
+    </div>
+</div>
+
+<!-- 组别管理模态框 -->
+<div id="groupsModal" class="modal">
+    <div class="panel">
+        <div class="panel-row" style="justify-content: space-between; margin-bottom: 6px;">
+            <h3 style="margin:0;">🧩 管理组别</h3>
+            <button class="btn-ghost" id="closeGroupsModalBtn" type="button">关闭</button>
+        </div>
+        <div class="panel-row" style="margin-top: 10px;">
+            <input id="newGroupNameInput" type="text" placeholder="新组名：例如 午餐 / 奶茶 / 夜宵" maxlength="20" autocomplete="off">
+            <button class="btn-add" id="createGroupBtn" type="button" style="padding:10px 18px; font-size: 0.95rem;">➕ 新建</button>
+        </div>
+        <div class="panel-list" id="groupsList"></div>
+        <div style="margin-top: 14px; color: var(--muted); font-size:0.9rem; line-height:1.4;">
+            删除组别时，组内菜品会自动移动到「默认」组，避免丢失。\n        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 存储 ----------
+    const STORAGE_KEY_V1 = 'takeaway_cards';
+    const STORAGE_KEY_V3 = 'takeaway_app_v3';
+
+    // v3 结构:
+    // { version: 3, groups: [{id,name,createdAt,isDefault}], cards: [{id,name,imageData,groupId}], ui: { currentGroupId, multiPickEnabled, selectedGroupIds } }
+    const ALL_GROUP_ID = 'all';
+    const DEFAULT_GROUP_ID = 'g_default';
+
+    let appState = null;
+    let groups = [];
+    let cards = [];
+    let currentGroupId = ALL_GROUP_ID;
+    let multiPickEnabled = false;
+    let selectedGroupIds = [];
+
+    // DOM 元素
+    const foodNameInput = document.getElementById('foodName');
+    const imageUpload = document.getElementById('imageUpload');
+    const addBtn = document.getElementById('addCardBtn');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cardCountSpan = document.getElementById('cardCountDisplay');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const eatBtn = document.getElementById('eatRandomBtn');
+    const groupsBar = document.getElementById('groupsBar');
+    const groupSelect = document.getElementById('groupSelect');
+    const manageGroupsBtn = document.getElementById('manageGroupsBtn');
+    const openMultiGroupBtn = document.getElementById('openMultiGroupBtn');
+    const closeMultiGroupBtn = document.getElementById('closeMultiGroupBtn');
+    const multiGroupBox = document.getElementById('multiGroupBox');
+    const multiGroupChecks = document.getElementById('multiGroupChecks');
+    const previewRow = document.getElementById('previewThumb');
+    const thumbImg = document.getElementById('thumbImg');
+    const fileNameSpan = document.getElementById('fileNameShow');
+    const modal = document.getElementById('resultModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc = document.getElementById('modalDesc');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const groupsModal = document.getElementById('groupsModal');
+    const closeGroupsModalBtn = document.getElementById('closeGroupsModalBtn');
+    const newGroupNameInput = document.getElementById('newGroupNameInput');
+    const createGroupBtn = document.getElementById('createGroupBtn');
+    const groupsList = document.getElementById('groupsList');
+
+    // 暂存当前选中的图片Base64
+    let pendingImageBase64 = null;
+    let pendingFileName = '';
+
+    // ---------- 辅助函数 ----------
+    function nowTs() { return Date.now(); }
+
+    function normalizeGroupName(name) {
+        return (name || '').trim().replace(/\s+/g, ' ').substring(0, 20);
+    }
+
+    function buildState() {
+        return {
+            version: 3,
+            groups,
+            cards,
+            ui: {
+                currentGroupId,
+                multiPickEnabled,
+                selectedGroupIds,
+            }
+        };
+    }
+
+    function saveToLocal() {
+        try {
+            localStorage.setItem(STORAGE_KEY_V3, JSON.stringify(buildState()));
+            return true;
+        } catch (e) {
+            const msg = (e && e.name) ? e.name : '';
+            const isQuota = msg === 'QuotaExceededError' || msg === 'NS_ERROR_DOM_QUOTA_REACHED' || String(e).toLowerCase().includes('quota');
+            if (isQuota) {
+                alert('⚠️ 本地存储空间不足（图片太大/太多）。\n\n建议：\n- 删除一些菜品卡片\n- 或上传更小的图片（已自动压缩，但原图过大仍可能超限）');
+            } else {
+                alert('保存失败：' + (e && e.message ? e.message : '未知错误'));
+            }
+            return false;
+        }
+    }
+
+    function migrateIfNeeded() {
+        const v3Raw = localStorage.getItem(STORAGE_KEY_V3);
+        if (v3Raw) return;
+
+        const v1Raw = localStorage.getItem(STORAGE_KEY_V1);
+        let v1Cards = null;
+        if (v1Raw) {
+            try {
+                v1Cards = JSON.parse(v1Raw);
+                if (!Array.isArray(v1Cards)) v1Cards = null;
+            } catch { v1Cards = null; }
+        }
+
+        groups = [
+            { id: DEFAULT_GROUP_ID, name: '默认', createdAt: nowTs(), isDefault: true },
+        ];
+        cards = (v1Cards || []).map(c => ({
+            id: c.id,
+            name: c.name,
+            imageData: c.imageData,
+            groupId: DEFAULT_GROUP_ID,
+        }));
+        currentGroupId = ALL_GROUP_ID;
+        multiPickEnabled = false;
+        selectedGroupIds = [DEFAULT_GROUP_ID];
+        saveToLocal();
+    }
+
+    function loadFromLocal() {
+        migrateIfNeeded();
+        const raw = localStorage.getItem(STORAGE_KEY_V3);
+        if (!raw) return false;
+        try {
+            const parsed = JSON.parse(raw);
+            if (!parsed || parsed.version !== 3) return false;
+            groups = Array.isArray(parsed.groups) ? parsed.groups : [];
+            cards = Array.isArray(parsed.cards) ? parsed.cards : [];
+            const ui = parsed.ui || {};
+            currentGroupId = ui.currentGroupId || ALL_GROUP_ID;
+            multiPickEnabled = !!ui.multiPickEnabled;
+            selectedGroupIds = Array.isArray(ui.selectedGroupIds) ? ui.selectedGroupIds : [];
+            // 修复默认组缺失
+            if (!groups.some(g => g.id === DEFAULT_GROUP_ID)) {
+                groups.unshift({ id: DEFAULT_GROUP_ID, name: '默认', createdAt: nowTs(), isDefault: true });
+            }
+            // 修复 card.groupId 缺失
+            cards.forEach(c => {
+                if (!c.groupId || !groups.some(g => g.id === c.groupId)) c.groupId = DEFAULT_GROUP_ID;
+            });
+            if (!selectedGroupIds.length) selectedGroupIds = [DEFAULT_GROUP_ID];
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function getGroupName(groupId) {
+        if (groupId === ALL_GROUP_ID) return '全部';
+        const g = groups.find(x => x.id === groupId);
+        return g ? g.name : '未知组';
+    }
+
+    function getVisibleCards() {
+        if (multiPickEnabled) {
+            const ids = new Set(selectedGroupIds.filter(id => id && id !== ALL_GROUP_ID));
+            if (ids.size === 0) return [];
+            return cards.filter(c => ids.has(c.groupId));
+        }
+        if (currentGroupId === ALL_GROUP_ID) return cards;
+        return cards.filter(c => c.groupId === currentGroupId);
+    }
+
+    // 渲染全部卡片 & 更新计数 & 空状态
+    function renderCards() {
+        if (!cardsContainer) return;
+        const visibleCards = getVisibleCards();
+        if (cards.length === 0) {
+            cardsContainer.innerHTML = `<div class="empty-state">🍽️ 菜单空空如也～ 上传图片并点击「加入菜单」吧 🍣</div>`;
+            cardCountSpan.innerText = `🍽️ 当前 0 道美味`;
+            return;
+        }
+        if (visibleCards.length === 0) {
+            cardsContainer.innerHTML = `<div class="empty-state">🗂️ 这个组还没有菜品～\n<br>切换到「全部」或先添加一些吧！</div>`;
+            cardCountSpan.innerText = `🍽️ 全部 ${cards.length} 道 · 当前组 0 道`;
+            return;
+        }
+
+        let html = '';
+        visibleCards.forEach(card => {
+            html += `
+                <div class="card" data-id="${card.id}">
+                    <div class="card-image-area">
+                        ${card.imageData ? `<button class="view-image-btn" data-id="${card.id}" title="查看图片">📷 查看图片</button>` : `<div class="no-image">🖼️ 无图片</div>`}
+                    </div>
+                    <div class="card-info">
+                        <span class="card-name" title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</span>
+                        <div class="card-actions">
+                            <button class="edit-card" data-id="${card.id}" title="修改名称">✏️</button>
+                            <button class="delete-card" data-id="${card.id}" title="删除外卖">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        cardsContainer.innerHTML = html;
+        cardCountSpan.innerText = `🍽️ 全部 ${cards.length} 道 · 当前${multiPickEnabled ? '多组' : ('「' + getGroupName(currentGroupId) + '」')} ${visibleCards.length} 道`;
+
+        // 绑定卡片内编辑/删除事件 (事件委托)
+        document.querySelectorAll('.edit-card').forEach(btn => {
+            btn.removeEventListener('click', handleEditClick);
+            btn.addEventListener('click', handleEditClick);
+        });
+        document.querySelectorAll('.delete-card').forEach(btn => {
+            btn.removeEventListener('click', handleDeleteClick);
+            btn.addEventListener('click', handleDeleteClick);
+        });
+        // 绑定查看图片按钮事件
+        document.querySelectorAll('.view-image-btn').forEach(btn => {
+            btn.removeEventListener('click', handleViewImageClick);
+            btn.addEventListener('click', handleViewImageClick);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    function handleEditClick(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const cardId = btn.getAttribute('data-id');
+        const card = cards.find(c => c.id == cardId);
+        if (!card) return;
+        const newName = prompt('✏️ 修改外卖名字', card.name);
+        if (newName && newName.trim() !== '') {
+            card.name = newName.trim().substring(0, 30);
+            saveToLocal();
+            renderCards();
+        }
+    }
+
+    function handleDeleteClick(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const cardId = btn.getAttribute('data-id');
+        cards = cards.filter(c => c.id != cardId);
+        saveToLocal();
+        renderCards();
+        // 移除可能的高亮class
+        removeAllHighlights();
+    }
+
+    function removeAllHighlights() {
+        const allCardsDom = document.querySelectorAll('.card');
+        allCardsDom.forEach(cardDom => {
+            cardDom.classList.remove('highlight');
+        });
+    }
+
+    // 查看图片
+    function handleViewImageClick(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const cardId = btn.getAttribute('data-id');
+        const card = cards.find(c => c.id == cardId);
+        if (!card) return;
+        // 如果有图片数据，显示图片模态框
+        if (card.imageData) {
+            showImageModal(card);
+        } else {
+            alert('这张外卖没有图片哦～');
+        }
+    }
+
+    // 显示图片模态框
+    function showImageModal(card) {
+        const modal = document.getElementById('resultModal');
+        const modalImg = document.getElementById('modalImg');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const closeBtn = document.getElementById('closeModalBtn');
+        
+        modalImg.src = card.imageData;
+        modalImg.alt = card.name;
+        modalTitle.textContent = card.name;
+        modalDesc.textContent = '📸 查看图片';
+        closeBtn.textContent = '👌 关闭';
+        
+        modal.style.display = 'flex';
+        
+        // 确保关闭按钮正常工作
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+        // 点击模态框背景关闭
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+    }
+
+    // 添加新卡片
+    function addCard(name, imageBase64, groupId) {
+        if (!name || name.trim() === '') {
+            alert('请填写外卖名称～ 例如「韩式炸鸡」');
+            return false;
+        }
+        // 图片可选，如果没有图片则存储空字符串
+        const targetGroupId = (groupId && groups.some(g => g.id === groupId)) ? groupId : DEFAULT_GROUP_ID;
+        const newCard = {
+            id: Date.now() + Math.random() * 10000,
+            name: name.trim(),
+            imageData: imageBase64 || '',
+            groupId: targetGroupId,
+        };
+        cards.push(newCard);
+        const saved = saveToLocal();
+        if (!saved) {
+            // 回滚这次 push，避免用户以为保存了但刷新丢失
+            cards = cards.filter(c => c.id !== newCard.id);
+            return false;
+        }
+        renderCards();
+        return true;
+    }
+
+    // 清除所有卡片
+    function clearAllCards() {
+        if (cards.length === 0) return;
+        if (confirm('🍽️ 真的要清空所有外卖卡片吗？ 清空后无法恢复～')) {
+            cards = [];
+            saveToLocal();
+            renderCards();
+            removeAllHighlights();
+        }
+    }
+
+    // 随机抽取 + 高亮卡片 + 弹出模态框
+    function randomEat() {
+        const pool = getVisibleCards();
+        if (pool.length === 0) {
+            alert('😭 还没有任何外卖选项！请先添加外卖（可以只输入文字）～');
+            return;
+        }
+        // 移除旧高亮
+        removeAllHighlights();
+        
+        // 随机抽选一个
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        const selectedCard = pool[randomIndex];
+        
+        // 找到对应的dom元素高亮
+        const allCardDivs = document.querySelectorAll('.card');
+        // 注意 data-id 是字符串类型
+        let targetDom = null;
+        for (let div of allCardDivs) {
+            if (div.getAttribute('data-id') == selectedCard.id) {
+                targetDom = div;
+                break;
+            }
+        }
+        if (targetDom) {
+            targetDom.classList.add('highlight');
+            // 滚动到视野内
+            targetDom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // 弹出精美模态框（卡片大展示）
+        if (selectedCard.imageData) {
+            modalImg.src = selectedCard.imageData;
+            modalImg.alt = selectedCard.name;
+        } else {
+            // 无图片时使用占位符
+            modalImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9IiNGNUU2RDYiIHJ4PSI0MCIvPjx0ZXh0IHg9IjIwMCIgeT0iMTUwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiNDMjdFNEEiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7imqUg5peg5Zu+44CCPC90ZXh0Pjwvc3ZnPg==';
+            modalImg.alt = '无图片';
+        }
+        modalTitle.innerText = selectedCard.name;
+        modalDesc.innerHTML = '🎉 天选之食！ 今天就是它啦 🎉';
+        modal.style.display = 'flex';
+    }
+
+    // 关闭模态框
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    // 图片转Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function dataUrlToImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = dataUrl;
+        });
+    }
+
+    function canvasToDataUrl(canvas, preferredType, quality) {
+        // 某些浏览器对 webp 支持不一致，失败时降级 jpeg
+        try {
+            const out = canvas.toDataURL(preferredType, quality);
+            if (typeof out === 'string' && out.startsWith('data:image/')) return out;
+        } catch {}
+        return canvas.toDataURL('image/jpeg', quality);
+    }
+
+    async function compressImageFile(file, opts = {}) {
+        const maxEdge = opts.maxEdge || 1024;
+        const quality = (typeof opts.quality === 'number') ? opts.quality : 0.78;
+        const preferredType = 'image/webp';
+
+        const rawDataUrl = await fileToBase64(file);
+        const img = await dataUrlToImage(rawDataUrl);
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+
+        if (!w || !h) return rawDataUrl;
+
+        let targetW = w;
+        let targetH = h;
+        const longer = Math.max(w, h);
+        if (longer > maxEdge) {
+            const scale = maxEdge / longer;
+            targetW = Math.round(w * scale);
+            targetH = Math.round(h * scale);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        const compressed = canvasToDataUrl(canvas, preferredType, quality);
+        // 若压缩后反而更大，使用原始
+        if (compressed && compressed.length < rawDataUrl.length) return compressed;
+        return rawDataUrl;
+    }
+
+    // 处理图片预览与存储待添加
+    async function onImageSelected(file) {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件（jpg/png/webp）');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('图片较大建议小于5MB，以免影响存储性能～');
+        }
+        try {
+            // 关键：压缩/缩放，避免 localStorage 迅速触顶导致“只能传 3 张”
+            const base64 = await compressImageFile(file, { maxEdge: 1024, quality: 0.78 });
+            pendingImageBase64 = base64;
+            pendingFileName = file.name;
+            // 显示预览
+            thumbImg.src = base64;
+            fileNameSpan.innerText = file.name.length > 20 ? file.name.slice(0, 18)+'...' : file.name;
+            previewRow.style.display = 'flex';
+        } catch(err) {
+            console.error(err);
+            alert('图片读取失败');
+        }
+    }
+
+    // 重置上传区域（不清除pending可选，但添加后不清除方便连续添加？但建议保留预览，让用户继续添加不同，手动重新选图会更自然，不过我们加完不清空预览，但用户可以再次点选文件替换）
+    function resetUploadPreview() {
+        // 不清空预览内容，但是保留pending的图片，为了体验，添加后保持预览状态但用户可继续新增其他图，手动再选图就覆盖
+        // 我们只需要在添加成功后不清除预览，但用户能继续点击添加（用同一张图？不合理，多次添加同一张图？一般添加后应该让表单可以继续添加新菜，不清空图片预览但可以让用户重新选图）
+        // 为了让逻辑舒服，添加后不清除预览也不清除pending，用户可以继续输入名称加同一张图？有点怪，但用户操作上可以重新再选图覆盖。
+        // 更符合直觉：添加成功后，保留图片预览但用户可以手动改名字再加新的，不过容易重复加。我们稍微优化，添加后不主动清空图片数据，但name输入框清空方便用户连续添加不同菜。
+        // 但容易连续误加同样图片多次，为了避免，添加成功后将 pendingImageBase64 保留，但用户可以重新点击上传新图，同时清空name输入框即可。
+    }
+
+    // 添加流程
+    async function handleAdd() {
+        let name = foodNameInput.value.trim();
+        if (!name) {
+            alert('请填写外卖名称 🍣');
+            return;
+        }
+        // 图片可选，如果没有上传图片，则使用空字符串
+        const selectedGroupId = groupSelect && groupSelect.value ? groupSelect.value : DEFAULT_GROUP_ID;
+        const success = addCard(name, pendingImageBase64, selectedGroupId);
+        if (success) {
+            // 添加成功，清空名称输入框，但保留图片预览（避免再填一次图，但用户可继续上传不同图片，但最好保留当前图片方便加同图不同名？保留预览，不清空pending，让用户如果继续添加需要改名称+可重新上传或手动点文件换图）
+            foodNameInput.value = '';
+            // 但是不清空pendingImageBase64，让用户可以通过重新上传文件来覆盖，也可以继续加相同图片不同名称？为了防呆，保持预览，用户可再次直接加另一个名称（会重复使用同一张图）——感觉不完美，但多数场景下用户会换图片。
+            // 更科学: 添加后清空文件选择input的值，保留预览但下次重新选图时覆盖pending。我们重置一下文件input的值，同时保留预览展示最后上传的图
+            imageUpload.value = '';   // 清空文件input，但预览不变，用户下次选新图会覆盖pending和预览
+            // 但名称清空了，提醒可以继续上传新图片
+            // 如果用户连续添加两张不同图片不同菜，预览还是旧的，但第二次需要重新上传新图片，再输入名称。符合逻辑
+        }
+    }
+
+    // 初始化加载本地数据，以及添加默认示例（如果有需要可给示例，但为了干净先不加，让用户自己上传，但为了初次体验，假如localStorage为空，可以加两个精美示例卡片(内置base64小图占位，但不要网络图) 为了避免网络图片，我们用dataURI简单示意）
+    function initDefaultExamples() {
+        if (cards.length === 0) {
+            // 提供两个示例本地绘制简单图标, 基于canvas生成极简food图片（保证有图，避免空界面）
+            const defaultFoods = [
+                { name: '🍕 经典意式披萨', color: '#f7c873', emoji: '🍕' },
+                { name: '🍣 三文鱼寿司拼盘', color: '#f3ac7a', emoji: '🍣' }
+            ];
+            defaultFoods.forEach((food, idx) => {
+                // 生成简单canvas图片作为默认图（base64）
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 300;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = food.color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = 'bold 80px "Segoe UI Emoji"';
+                ctx.fillStyle = '#ffffffcc';
+                ctx.fillText(food.emoji, canvas.width/2-50, canvas.height/2+30);
+                ctx.fillStyle = '#fff3e0';
+                ctx.font = '24px system-ui';
+                ctx.fillText(food.name.substring(0,8), 40, 270);
+                const defaultImg = canvas.toDataURL();
+                cards.push({
+                    id: Date.now() + idx + Math.random(),
+                    name: food.name,
+                    imageData: defaultImg,
+                    groupId: DEFAULT_GROUP_ID,
+                });
+            });
+            saveToLocal();
+        }
+    }
+
+    function renderGroupTabs() {
+        if (!groupsBar) return;
+        const tabs = [
+            { id: ALL_GROUP_ID, name: '全部' },
+            ...groups.map(g => ({ id: g.id, name: g.name }))
+        ];
+        groupsBar.innerHTML = tabs.map(t => {
+            const active = (!multiPickEnabled && currentGroupId === t.id) ? 'active' : '';
+            return `<button class="group-tab ${active}" data-gid="${t.id}" type="button">${escapeHtml(t.name)}</button>`;
+        }).join('');
+
+        groupsBar.querySelectorAll('.group-tab').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const gid = e.currentTarget.getAttribute('data-gid');
+                multiPickEnabled = false;
+                currentGroupId = gid || ALL_GROUP_ID;
+                // 同步下拉默认选中（上传加入哪个组）
+                syncGroupSelectDefault();
+                saveToLocal();
+                renderAll();
+            });
+        });
+    }
+
+    function renderGroupSelect() {
+        if (!groupSelect) return;
+        groupSelect.innerHTML = groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+        syncGroupSelectDefault();
+    }
+
+    function syncGroupSelectDefault() {
+        if (!groupSelect) return;
+        if (multiPickEnabled) {
+            // 多选模式下，上传默认放到默认组（避免误操作）
+            groupSelect.value = DEFAULT_GROUP_ID;
+            return;
+        }
+        if (currentGroupId !== ALL_GROUP_ID && groups.some(g => g.id === currentGroupId)) {
+            groupSelect.value = currentGroupId;
+            return;
+        }
+        groupSelect.value = DEFAULT_GROUP_ID;
+    }
+
+    function openGroupsModal() {
+        renderGroupsModalList();
+        groupsModal.style.display = 'flex';
+        newGroupNameInput.value = '';
+        newGroupNameInput.focus();
+    }
+
+    function closeGroupsModal() {
+        groupsModal.style.display = 'none';
+    }
+
+    function renderGroupsModalList() {
+        if (!groupsList) return;
+        groupsList.innerHTML = groups.map(g => {
+            const isDefault = !!g.isDefault || g.id === DEFAULT_GROUP_ID;
+            const badge = isDefault ? `<span class="hint-pill" style="padding:4px 10px; font-size:0.8rem;">默认</span>` : '';
+            return `
+                <div class="group-item" data-gid="${g.id}">
+                    <div style="display:flex; align-items:center; gap:10px; min-width: 0;">
+                        <div class="group-item-name" title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</div>
+                        ${badge}
+                    </div>
+                    <div class="group-item-actions">
+                        <button class="chip" data-action="rename" data-gid="${g.id}" type="button">✏️ 改名</button>
+                        ${isDefault ? '' : `<button class="chip danger" data-action="delete" data-gid="${g.id}" type="button">🗑️ 删除</button>`}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        groupsList.querySelectorAll('button[data-action="rename"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const gid = e.currentTarget.getAttribute('data-gid');
+                const g = groups.find(x => x.id === gid);
+                if (!g) return;
+                const next = normalizeGroupName(prompt('✏️ 修改组名', g.name));
+                if (!next) return;
+                if (groups.some(x => x.id !== gid && x.name === next)) {
+                    alert('这个组名已经存在啦～换一个吧');
+                    return;
+                }
+                g.name = next;
+                saveToLocal();
+                renderAll();
+                renderGroupsModalList();
+            });
+        });
+
+        groupsList.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const gid = e.currentTarget.getAttribute('data-gid');
+                const g = groups.find(x => x.id === gid);
+                if (!g) return;
+                if (!confirm(`确定要删除组「${g.name}」吗？\n组内菜品会移动到「默认」组。`)) return;
+                // 迁移组内卡片
+                cards.forEach(c => {
+                    if (c.groupId === gid) c.groupId = DEFAULT_GROUP_ID;
+                });
+                // 删除组
+                groups = groups.filter(x => x.id !== gid);
+                // 修正 UI 状态
+                if (currentGroupId === gid) currentGroupId = ALL_GROUP_ID;
+                selectedGroupIds = selectedGroupIds.filter(id => id !== gid);
+                if (!selectedGroupIds.length) selectedGroupIds = [DEFAULT_GROUP_ID];
+                saveToLocal();
+                renderAll();
+                renderGroupsModalList();
+            });
+        });
+    }
+
+    function createGroup() {
+        const name = normalizeGroupName(newGroupNameInput.value);
+        if (!name) {
+            alert('请输入组名～');
+            return;
+        }
+        if (groups.some(g => g.name === name)) {
+            alert('这个组名已经存在啦～换一个吧');
+            return;
+        }
+        const gid = 'g_' + nowTs().toString(36) + Math.random().toString(36).slice(2, 6);
+        groups.push({ id: gid, name, createdAt: nowTs(), isDefault: false });
+        newGroupNameInput.value = '';
+        saveToLocal();
+        renderAll();
+        renderGroupsModalList();
+    }
+
+    function openMultiGroup() {
+        multiPickEnabled = true;
+        multiGroupBox.classList.add('show');
+        renderMultiGroupChecks();
+        saveToLocal();
+        renderAll();
+    }
+
+    function closeMultiGroup() {
+        multiPickEnabled = false;
+        multiGroupBox.classList.remove('show');
+        saveToLocal();
+        renderAll();
+    }
+
+    function renderMultiGroupChecks() {
+        if (!multiGroupChecks) return;
+        const items = groups.map(g => {
+            const checked = selectedGroupIds.includes(g.id) ? 'checked' : '';
+            return `
+                <label class="check-pill">
+                    <input type="checkbox" data-gid="${g.id}" ${checked}>
+                    <span>${escapeHtml(g.name)}</span>
+                </label>
+            `;
+        });
+        multiGroupChecks.innerHTML = items.join('');
+        multiGroupChecks.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                const gid = e.currentTarget.getAttribute('data-gid');
+                if (!gid) return;
+                if (e.currentTarget.checked) {
+                    if (!selectedGroupIds.includes(gid)) selectedGroupIds.push(gid);
+                } else {
+                    selectedGroupIds = selectedGroupIds.filter(x => x !== gid);
+                }
+                if (!selectedGroupIds.length) {
+                    // 至少保留一个，避免“抽不到任何组”
+                    selectedGroupIds = [DEFAULT_GROUP_ID];
+                    renderMultiGroupChecks();
+                }
+                saveToLocal();
+                renderCards();
+            });
+        });
+    }
+
+    function renderAll() {
+        renderGroupTabs();
+        renderGroupSelect();
+        if (multiPickEnabled) {
+            multiGroupBox.classList.add('show');
+            renderMultiGroupChecks();
+        } else {
+            multiGroupBox.classList.remove('show');
+        }
+        renderCards();
+    }
+
+    // 图片上传监听
+    imageUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            await onImageSelected(file);
+        } else {
+            pendingImageBase64 = null;
+            previewRow.style.display = 'none';
+        }
+    });
+
+    addBtn.addEventListener('click', handleAdd);
+    clearAllBtn.addEventListener('click', clearAllCards);
+    eatBtn.addEventListener('click', randomEat);
+    closeModalBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    manageGroupsBtn.addEventListener('click', openGroupsModal);
+    closeGroupsModalBtn.addEventListener('click', closeGroupsModal);
+    groupsModal.addEventListener('click', (e) => {
+        if (e.target === groupsModal) closeGroupsModal();
+    });
+    createGroupBtn.addEventListener('click', createGroup);
+    newGroupNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') createGroup();
+    });
+
+    openMultiGroupBtn.addEventListener('click', openMultiGroup);
+    closeMultiGroupBtn.addEventListener('click', closeMultiGroup);
+
+    // 初始化
+    function init() {
+        loadFromLocal();
+        if (!cards.length) initDefaultExamples();
+        // 确保 UI 默认值合理
+        if (!groups.length) {
+            groups = [{ id: DEFAULT_GROUP_ID, name: '默认', createdAt: nowTs(), isDefault: true }];
+        }
+        if (!selectedGroupIds.length) selectedGroupIds = [DEFAULT_GROUP_ID];
+        renderAll();
+        // 清理预览区域初始状态
+        pendingImageBase64 = null;
+        previewRow.style.display = 'none';
+        imageUpload.value = '';
+    }
+
+    init();
+</script>
+</body>
+</html>
