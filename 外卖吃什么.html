@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>🍜 今天吃什么 · 外卖随机决定器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f7f0e6 0%, #e9dfd1 100%);
+            font-family: 'Segoe UI', 'SF Pro Text', 'PingFang SC', Roboto, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            padding: 24px 20px 48px;
+            min-height: 100vh;
+            color: #2d2418;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* 头部区域 */
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 2.6rem;
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .header h1 span {
+            background: none;
+            color: #c94f0b;
+            font-size: 2.8rem;
+        }
+
+        .sub {
+            color: #7f5e3c;
+            background: rgba(255,245,235,0.7);
+            backdrop-filter: blur(2px);
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 60px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        /* 上传卡片区 */
+        .upload-area {
+            background: white;
+            border-radius: 48px;
+            padding: 24px 28px;
+            margin-bottom: 36px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 2;
+            min-width: 160px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b87333;
+            margin-bottom: 6px;
+        }
+
+        .input-group input, .file-label {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 32px;
+            border: 1px solid #f0e0d0;
+            background: #fefaf5;
+            font-size: 1rem;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #e67e22;
+            box-shadow: 0 0 0 3px rgba(230,126,34,0.2);
+        }
+
+        .file-label {
+            display: inline-block;
+            background: #fff3e8;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 500;
+            color: #c94f0b;
+            border: 1px dashed #e6bc9e;
+        }
+
+        .file-label:hover {
+            background: #ffede0;
+            border-color: #e67e22;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-img {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 24px;
+            background: #f0e0cf;
+            border: 1px solid #eedbcb;
+        }
+
+        .preview-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #b56a2c;
+        }
+
+        .btn-add {
+            background: linear-gradient(110deg, #e67e22, #f39c12);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-family: inherit;
+        }
+
+        .btn-add:hover {
+            transform: scale(0.98);
+            background: linear-gradient(110deg, #d35400, #e67e22);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            gap: 12px;
+        }
+
+        .card-count {
+            background: #fff0e4;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .btn-clear {
+            background: none;
+            border: 1px solid #dbb68c;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #a55d2a;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: #ffe0ce;
+            border-color: #e67e22;
+        }
+
+        /* 随机主按钮 */
+        .eat-btn-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0 32px;
+        }
+
+        .eat-btn {
+            background: radial-gradient(circle at 30% 10%, #ff9f4a, #e25822);
+            border: none;
+            padding: 18px 48px;
+            border-radius: 80px;
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            box-shadow: 0 20px 30px -10px rgba(220, 80, 20, 0.4);
+            transition: all 0.2s ease;
+            letter-spacing: 2px;
+        }
+
+        .eat-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 卡片网格 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 28px;
+            margin-top: 12px;
+        }
+
+        /* 外卖卡片 💳 风格 */
+        .card {
+            background: white;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            backdrop-filter: blur(0px);
+            border: 1px solid rgba(255,215,180,0.5);
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 25px 35px -12px rgba(0,0,0,0.2);
+        }
+
+        .card-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #f5e6d6;
+            display: block;
+            transition: 0.2s;
+        }
+
+        .card-info {
+            padding: 18px 16px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffffdd;
+            backdrop-filter: blur(2px);
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #2c1a0c;
+            word-break: break-word;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .card-actions button {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.1s;
+            width: 32px;
+            height: 32px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .edit-card {
+            color: #f5a65a;
+        }
+
+        .edit-card:hover {
+            background: #fff0e0;
+            transform: scale(1.05);
+        }
+
+        .delete-card {
+            color: #c27e4a;
+        }
+
+        .delete-card:hover {
+            background: #ffefea;
+            color: #e63946;
+        }
+
+        /* 高亮抽中卡片动画 */
+        .card.highlight {
+            animation: popGlow 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1) 2;
+            box-shadow: 0 0 0 4px #f39c12, 0 0 0 8px rgba(243,156,18,0.4);
+            transform: scale(1.02);
+        }
+
+        @keyframes popGlow {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 #f1c40f; }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 8px #f39c12, 0 0 0 14px rgba(243,156,18,0.3); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 #f39c12; }
+        }
+
+        /* 模态框（抽中放大卡片效果）*/
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            font-family: inherit;
+        }
+
+        .modal-card {
+            background: #fffaf3;
+            border-radius: 64px;
+            max-width: 340px;
+            width: 85%;
+            text-align: center;
+            padding: 28px 20px 32px;
+            box-shadow: 0 40px 50px rgba(0,0,0,0.3);
+            animation: floatModal 0.3s ease-out;
+            border: 2px solid #ffcc88;
+        }
+
+        @keyframes floatModal {
+            from { opacity: 0; transform: scale(0.9) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-card img {
+            width: 180px;
+            height: 180px;
+            border-radius: 40px;
+            object-fit: cover;
+            margin: 8px auto;
+            border: 4px solid #ffaa66;
+            background: #eedbcb;
+        }
+
+        .modal-card h2 {
+            font-size: 2rem;
+            margin: 16px 0 8px;
+            color: #d35400;
+        }
+
+        .modal-card p {
+            font-size: 1.2rem;
+            color: #5a3a22;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: #e67e22;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff4ea;
+            border-radius: 60px;
+            color: #b77b46;
+            font-size: 1.2rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: #ad8662;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+            .eat-btn { font-size: 1.5rem; padding: 14px 28px; gap: 8px; }
+            .card-name { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>
+            <span>🍱</span> 今天吃什么？ <span>🎲</span>
+        </h1>
+        <div class="sub">✨ 上传你的外卖军团，让命运点击「开吃」 ✨</div>
+    </div>
+
+    <!-- 上传区块 -->
+    <div class="upload-area">
+        <div class="form-row">
+            <div class="input-group">
+                <label>🍛 菜品 / 店名</label>
+                <input type="text" id="foodName" placeholder="例：招牌牛肉饭 / 麦辣鸡翅..." autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>📸 上传外卖图片</label>
+                <input type="file" id="imageUpload" accept="image/jpeg,image/png,image/webp">
+                <label for="imageUpload" class="file-label" id="fileLabelBtn">➕ 选择图片</label>
+                <div id="previewThumb" class="preview-row" style="display: none;">
+                    <img id="thumbImg" class="preview-img" alt="preview">
+                    <span id="fileNameShow"></span>
+                </div>
+            </div>
+            <div class="input-group">
+                <button class="btn-add" id="addCardBtn">➕ 加入菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工具栏 & 开吃按钮 -->
+    <div class="toolbar">
+        <div class="card-count" id="cardCountDisplay">🍽️ 当前 0 道美味</div>
+        <button class="btn-clear" id="clearAllBtn">🗑️ 清空全部</button>
+    </div>
+
+    <div class="eat-btn-wrapper">
+        <button class="eat-btn" id="eatRandomBtn">🍜 开 吃 ！ 🎲</button>
+    </div>
+
+    <!-- 卡片网格 -->
+    <div id="cardsContainer" class="cards-grid">
+        <!-- 动态卡片会渲染在此 -->
+        <div class="empty-state">🍕 还没有外卖选项～ 快上传图片并取个名字吧！</div>
+    </div>
+    <footer>💡 点击卡片上的✏️可改名，🗑️删除。所有图片自动保存在本地，刷新不丢失。</footer>
+</div>
+
+<!-- 抽取结果模态框 -->
+<div id="resultModal" class="modal">
+    <div class="modal-card">
+        <img id="modalImg" src="" alt="今日美食">
+        <h2 id="modalTitle">✨ 就是它 ✨</h2>
+        <p id="modalDesc">开动吧！</p>
+        <button class="close-modal" id="closeModalBtn">🥢 好！开动 🥢</button>
+    </div>
+</div>
+
+<script>
+    // ---------- 数据存储 key ----------
+    const STORAGE_KEY = 'takeaway_cards';
+
+    // 卡片数组结构: { id, name, imageData }
+    let cards = [];
+
+    // DOM 元素
+    const foodNameInput = document.getElementById('foodName');
+    const imageUpload = document.getElementById('imageUpload');
+    const addBtn = document.getElementById('addCardBtn');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cardCountSpan = document.getElementById('cardCountDisplay');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const eatBtn = document.getElementById('eatRandomBtn');
+    const previewRow = document.getElementById('previewThumb');
+    const thumbImg = document.getElementById('thumbImg');
+    const fileNameSpan = document.getElementById('fileNameShow');
+    const modal = document.getElementById('resultModal');
+    const modalImg = document.getElementById('modalImg');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDesc = document.getElementById('modalDesc');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // 暂存当前选中的图片Base64
+    let pendingImageBase64 = null;
+    let pendingFileName = '';
+
+    // ---------- 辅助函数 ----------
+    function saveToLocal() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+    }
+
+    // 渲染全部卡片 & 更新计数 & 空状态
+    function renderCards() {
+        if (!cardsContainer) return;
+        if (cards.length === 0) {
+            cardsContainer.innerHTML = `<div class="empty-state">🍽️ 菜单空空如也～ 上传图片并点击「加入菜单」吧 🍣</div>`;
+            cardCountSpan.innerText = `🍽️ 当前 0 道美味`;
+            return;
+        }
+
+        let html = '';
+        cards.forEach(card => {
+            html += `
+                <div class="card" data-id="${card.id}">
+                    <img class="card-img" src="${card.imageData}" alt="${escapeHtml(card.name)}" onerror="this.src='https://placehold.co/400x300?text=🍔+加载失败'">
+                    <div class="card-info">
+                        <span class="card-name" title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</span>
+                        <div class="card-actions">
+                            <button class="edit-card" data-id="${card.id}" title="修改名称">✏️</button>
+                            <button class="delete-card" data-id="${card.id}" title="删除外卖">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        cardsContainer.innerHTML = html;
+        cardCountSpan.innerText = `🍽️ 当前 ${cards.length} 道美味`;
+
+        // 绑定卡片内编辑/删除事件 (事件委托)
+        document.querySelectorAll('.edit-card').forEach(btn => {
+            btn.removeEventListener('click', handleEditClick);
+            btn.addEventListener('click', handleEditClick);
+        });
+        document.querySelectorAll('.delete-card').forEach(btn => {
+            btn.removeEventListener('click', handleDeleteClick);
+            btn.addEventListener('click', handleDeleteClick);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    function handleEditClick(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const cardId = btn.getAttribute('data-id');
+        const card = cards.find(c => c.id == cardId);
+        if (!card) return;
+        const newName = prompt('✏️ 修改外卖名字', card.name);
+        if (newName && newName.trim() !== '') {
+            card.name = newName.trim().substring(0, 30);
+            saveToLocal();
+            renderCards();
+        }
+    }
+
+    function handleDeleteClick(e) {
+        e.stopPropagation();
+        const btn = e.currentTarget;
+        const cardId = btn.getAttribute('data-id');
+        cards = cards.filter(c => c.id != cardId);
+        saveToLocal();
+        renderCards();
+        // 移除可能的高亮class
+        removeAllHighlights();
+    }
+
+    function removeAllHighlights() {
+        const allCardsDom = document.querySelectorAll('.card');
+        allCardsDom.forEach(cardDom => {
+            cardDom.classList.remove('highlight');
+        });
+    }
+
+    // 添加新卡片
+    function addCard(name, imageBase64) {
+        if (!name || name.trim() === '') {
+            alert('请填写外卖名称～ 例如「韩式炸鸡」');
+            return false;
+        }
+        if (!imageBase64) {
+            alert('请先上传一张外卖图片！🍔');
+            return false;
+        }
+        const newCard = {
+            id: Date.now() + Math.random() * 10000,
+            name: name.trim(),
+            imageData: imageBase64,
+        };
+        cards.push(newCard);
+        saveToLocal();
+        renderCards();
+        return true;
+    }
+
+    // 清除所有卡片
+    function clearAllCards() {
+        if (cards.length === 0) return;
+        if (confirm('🍽️ 真的要清空所有外卖卡片吗？ 清空后无法恢复～')) {
+            cards = [];
+            saveToLocal();
+            renderCards();
+            removeAllHighlights();
+        }
+    }
+
+    // 随机抽取 + 高亮卡片 + 弹出模态框
+    function randomEat() {
+        if (cards.length === 0) {
+            alert('😭 还没有任何外卖选项！请先上传图片加入菜单～');
+            return;
+        }
+        // 移除旧高亮
+        removeAllHighlights();
+        
+        // 随机抽选一个
+        const randomIndex = Math.floor(Math.random() * cards.length);
+        const selectedCard = cards[randomIndex];
+        
+        // 找到对应的dom元素高亮
+        const allCardDivs = document.querySelectorAll('.card');
+        // 注意 data-id 是字符串类型
+        let targetDom = null;
+        for (let div of allCardDivs) {
+            if (div.getAttribute('data-id') == selectedCard.id) {
+                targetDom = div;
+                break;
+            }
+        }
+        if (targetDom) {
+            targetDom.classList.add('highlight');
+            // 滚动到视野内
+            targetDom.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // 弹出精美模态框（卡片大展示）
+        modalImg.src = selectedCard.imageData;
+        modalTitle.innerText = selectedCard.name;
+        modalDesc.innerHTML = '🎉 天选之食！ 今天就是它啦 🎉';
+        modal.style.display = 'flex';
+    }
+
+    // 关闭模态框
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    // 图片转Base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 处理图片预览与存储待添加
+    async function onImageSelected(file) {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件（jpg/png/webp）');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('图片较大建议小于5MB，以免影响存储性能～');
+        }
+        try {
+            const base64 = await fileToBase64(file);
+            pendingImageBase64 = base64;
+            pendingFileName = file.name;
+            // 显示预览
+            thumbImg.src = base64;
+            fileNameSpan.innerText = file.name.length > 20 ? file.name.slice(0, 18)+'...' : file.name;
+            previewRow.style.display = 'flex';
+        } catch(err) {
+            console.error(err);
+            alert('图片读取失败');
+        }
+    }
+
+    // 重置上传区域（不清除pending可选，但添加后不清除方便连续添加？但建议保留预览，让用户继续添加不同，手动重新选图会更自然，不过我们加完不清空预览，但用户可以再次点选文件替换）
+    function resetUploadPreview() {
+        // 不清空预览内容，但是保留pending的图片，为了体验，添加后保持预览状态但用户可继续新增其他图，手动再选图就覆盖
+        // 我们只需要在添加成功后不清除预览，但用户能继续点击添加（用同一张图？不合理，多次添加同一张图？一般添加后应该让表单可以继续添加新菜，不清空图片预览但可以让用户重新选图）
+        // 为了让逻辑舒服，添加后不清除预览也不清除pending，用户可以继续输入名称加同一张图？有点怪，但用户操作上可以重新再选图覆盖。
+        // 更符合直觉：添加成功后，保留图片预览但用户可以手动改名字再加新的，不过容易重复加。我们稍微优化，添加后不主动清空图片数据，但name输入框清空方便用户连续添加不同菜。
+        // 但容易连续误加同样图片多次，为了避免，添加成功后将 pendingImageBase64 保留，但用户可以重新点击上传新图，同时清空name输入框即可。
+    }
+
+    // 添加流程
+    async function handleAdd() {
+        let name = foodNameInput.value.trim();
+        if (!name) {
+            alert('请填写外卖名称 🍣');
+            return;
+        }
+        // 如果没有待添加图片，检查是否已有图片上传？
+        if (!pendingImageBase64) {
+            alert('请先上传一张外卖图片！📸');
+            return;
+        }
+        const success = addCard(name, pendingImageBase64);
+        if (success) {
+            // 添加成功，清空名称输入框，但保留图片预览（避免再填一次图，但用户可继续上传不同图片，但最好保留当前图片方便加同图不同名？保留预览，不清空pending，让用户如果继续添加需要改名称+可重新上传或手动点文件换图）
+            foodNameInput.value = '';
+            // 但是不清空pendingImageBase64，让用户可以通过重新上传文件来覆盖，也可以继续加相同图片不同名称？为了防呆，保持预览，用户可再次直接加另一个名称（会重复使用同一张图）——感觉不完美，但多数场景下用户会换图片。
+            // 更科学: 添加后清空文件选择input的值，保留预览但下次重新选图时覆盖pending。我们重置一下文件input的值，同时保留预览展示最后上传的图
+            imageUpload.value = '';   // 清空文件input，但预览不变，用户下次选新图会覆盖pending和预览
+            // 但名称清空了，提醒可以继续上传新图片
+            // 如果用户连续添加两张不同图片不同菜，预览还是旧的，但第二次需要重新上传新图片，再输入名称。符合逻辑
+        }
+    }
+
+    // 初始化加载本地数据，以及添加默认示例（如果有需要可给示例，但为了干净先不加，让用户自己上传，但为了初次体验，假如localStorage为空，可以加两个精美示例卡片(内置base64小图占位，但不要网络图) 为了避免网络图片，我们用dataURI简单示意）
+    function initDefaultExamples() {
+        if (cards.length === 0) {
+            // 提供两个示例本地绘制简单图标, 基于canvas生成极简food图片（保证有图，避免空界面）
+            const defaultFoods = [
+                { name: '🍕 经典意式披萨', color: '#f7c873', emoji: '🍕' },
+                { name: '🍣 三文鱼寿司拼盘', color: '#f3ac7a', emoji: '🍣' }
+            ];
+            defaultFoods.forEach((food, idx) => {
+                // 生成简单canvas图片作为默认图（base64）
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 300;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = food.color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = 'bold 80px "Segoe UI Emoji"';
+                ctx.fillStyle = '#ffffffcc';
+                ctx.fillText(food.emoji, canvas.width/2-50, canvas.height/2+30);
+                ctx.fillStyle = '#fff3e0';
+                ctx.font = '24px system-ui';
+                ctx.fillText(food.name.substring(0,8), 40, 270);
+                const defaultImg = canvas.toDataURL();
+                cards.push({
+                    id: Date.now() + idx + Math.random(),
+                    name: food.name,
+                    imageData: defaultImg,
+                });
+            });
+            saveToLocal();
+        }
+    }
+
+    // 图片上传监听
+    imageUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            await onImageSelected(file);
+        } else {
+            pendingImageBase64 = null;
+            previewRow.style.display = 'none';
+        }
+    });
+
+    addBtn.addEventListener('click', handleAdd);
+    clearAllBtn.addEventListener('click', clearAllCards);
+    eatBtn.addEventListener('click', randomEat);
+    closeModalBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // 初始化
+    function init() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                cards = JSON.parse(stored);
+                // 兼容旧数据检测
+                if (!Array.isArray(cards)) cards = [];
+            } catch(e) { cards = []; }
+        }
+        if (!cards.length) {
+            initDefaultExamples();   // 优雅示例填充，用户也可自行删除
+        } else {
+            // 确保每个卡片都有有效图片（无额外处理）
+        }
+        renderCards();
+        // 清理预览区域初始状态
+        pendingImageBase64 = null;
+        previewRow.style.display = 'none';
+        imageUpload.value = '';
+    }
+
+    init();
+</script>
+</body>
+</html>
